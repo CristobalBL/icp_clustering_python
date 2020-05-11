@@ -17,7 +17,11 @@ Sklearn: https://scikit-learn.org/stable/
 
 ## Output example
 
-[Prob plot images]
+<img src=https://github.com/CristobalBL/icp_clustering_python/blob/master/results/probplot/Be_ICP_ppm_probplot.png width=400 />
+
+<img src=https://github.com/CristobalBL/icp_clustering_python/blob/master/results/probplot/Ca_ICP_porc_probplot.png width=400 />
+
+<img src=https://github.com/CristobalBL/icp_clustering_python/blob/master/results/probplot/Mg_ICP_porc_probplot.png width=400 />
 
 ## Authors
 
