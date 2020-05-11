@@ -1,8 +1,9 @@
 # Python and OS
-from pathlib import Path
+import os
 
 # Data
 import pandas as pd
+import numpy as np
 
 # Time
 import time
@@ -11,26 +12,28 @@ import time
 from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import AgglomerativeClustering
 
+# Plot
+import probscale
+import matplotlib.pyplot as plt
+from matplotlib.ticker import FuncFormatter
+
 
 def main():
     print("------- ICP Clustering -------")
-
-    # Parameters
-    input_path = "C:\\Users\\crist\\Documents\\Work\\13_ModelClustering\\Datos\\data_comp.csv"  # input data
-    output_path = "C:\\Users\\crist\\Documents\\Work\\13_ModelClustering\\clustering_samples_icp\\results\\"  # output dir
-
     # Vars to cluster (maybe different)
     # Al, B, Ba, Be, Bi, Ca, Cd, Ce, Co, Cr, Cs, Ga, Ge, Hg, K, La,
     # Mg, Mn, Na, Ni, Rb, Re, S, Sb, Sc, Se, Sr, Te, Th, U, V, W.
 
+    # Parameters
+    input_path = "C:\\Users\\crist\\Documents\\Work\\13_ModelClustering\\Datos\\data_comp.csv"  # input data
+    output_path = "C:\\Users\\crist\\Documents\\Work\\13_ModelClustering\\clustering_samples_icp\\results\\"
+    output_filepath = output_path + "data_clustered.csv"
     loc_columns = ['dhid', 'midx', 'midy', 'midz']  # location vars
-    data_columns = ['Al', 'B', 'Ba', 'Be', 'Bi', 'Ca', 'Cd', 'Ce', 'Co',
-                    'Cr', 'Cs', 'Ga', 'Ge', 'Hg', 'K', 'La', 'Mg', 'Mn',
-                    'Na', 'Ni', 'Rb', 'Re', 'S', 'Sb', 'Sc', 'Se', 'Sr',
-                    'Te', 'Th', 'U', 'V', 'W']
-    col_group = "litmod"
-    group = 1
+    col_group = "litmod"  # column of the category to filter
+    group = 1  # category to filter
     n_clusters = 4
+    target_cols = ["Al_ICP_porc", "B_ICP_ppm", "Ba_ICP_ppm", "Be_ICP_ppm", "Bi_ICP_ppm", "Ca_ICP_porc", "Cd_ICP_ppm", "Ce_ICP_ppm", "Co_ICP_ppm", "Cr_ICP_ppm", "Cs_ICP_ppm", "Ga_ICP_ppm", "Ge_ICP_ppm", "Hg_ICP_ppm", "K_ICP_porc", "La_ICP_ppm", "Mg_ICP_porc", "Mn_ICP_ppm", "Na_ICP_porc", "Ni_ICP_ppm", "Rb_ICP_ppm", "Re_ICP_ppm", "S_ICP_porc", "Sb_ICP_ppm", "Sc_ICP_ppm", "Se_ICP_ppm", "Sr_ICP_ppm", "Te_ICP_ppm", "Th_ICP_ppm", "U_ICP_ppm", "V_ICP_ppm", "W_ICP_ppm"]
+    cluster_col = "tag_agg" + '_' + str(n_clusters)
 
     # Get pandas data frame
     # Read Data
@@ -42,13 +45,10 @@ def main():
     if col_group is not None and group is not None:
         df_group = filter_data_by_column_value(df_group, col_group, group)
 
-    target_cols = find_column(data_columns, df_group.columns, extra_word="_ICP")  # find ICP columns
-
     # Prepare Data
     df_to_cluster = prepare_data(target_cols=target_cols,
                                  loc_cols=loc_columns,
-                                 df=df_group,
-                                 output_path=output_path)
+                                 df=df_group)
 
     # Convert Data to Numpy Array
     df_target_data = df_to_cluster.loc[:, target_cols]
@@ -63,13 +63,27 @@ def main():
     start_time = time.time()
     agg_clustering = AgglomerativeClustering(n_clusters=n_clusters).fit(np_array_scaled)
     labels = agg_clustering.labels_
-    tag_str = "agg" + '_' + str(n_clusters)
-    df_to_cluster['tag_' + tag_str] = labels.tolist()
+    df_to_cluster[cluster_col] = labels.tolist()
     print(set(labels))
     print("Clustering samples in {} seconds".format(time.time() - start_time))
 
     # Save
-    df_to_cluster.to_csv(output_path + "data_clustered.csv", index=False)
+    df_to_cluster.to_csv(output_filepath, index=False)
+
+    # Plot results
+    start = time.time()
+
+    # Get data frame
+    df_plot = pd.read_csv(output_filepath)
+
+    # Get target columns
+    target_cols = find_column(target_cols, df_plot.columns)
+
+    get_group_probplot(df_plot, cluster_col, target_cols, output_path)
+
+    end = time.time()
+
+    print("Elapsed Time: {}".format(end - start))
 
 
 # Helper to get data
@@ -104,7 +118,7 @@ def filter_data_by_column_value(df, group_col, group_value):
 
 
 # Prepare data
-def prepare_data(target_cols, loc_cols, df, output_path=None):
+def prepare_data(target_cols, loc_cols, df):
     # Remove not used columns
     df_to_cluster = df.loc[:, loc_cols + target_cols]
     # print(df_to_cluster.head())
@@ -121,10 +135,6 @@ def prepare_data(target_cols, loc_cols, df, output_path=None):
     ppm_cols = [k for k in df_to_cluster.columns if "ppm" in k]
     df_to_cluster[ppm_cols] = df_to_cluster[ppm_cols].apply(lambda x: x / 10000)
 
-    if output_path is not None:
-        Path(output_path).mkdir(parents=True, exist_ok=True)
-        df_to_cluster.to_csv(output_path + "data_to_cluster.csv", index=False)
-
     # print(df_to_cluster.describe())
     return df_to_cluster
 
@@ -134,6 +144,62 @@ def mult_conditions(df, target_cols, threshold):
     for col in target_cols:
         cond |= df[col] <= threshold
     return cond
+
+
+def get_group_probplot(df, gcol, tcols, output_path):
+    print("Get prob plot per group")
+    groups = df.loc[:, gcol].unique().tolist()
+    groups = np.sort(groups)
+
+    color_dict = {}
+    for k in groups:
+        color_dict[k] = np.random.rand(3, )
+
+    for col in tcols:
+        # print("Column: {}".format(col))
+        fig = plt.figure(figsize=(14, 14))
+        for k in groups:
+            common_opts = dict(
+                plottype='prob', probax='y',
+                datascale='log', problabel='Cumulative Probability', datalabel=k
+            )
+
+            df_k = df[df[gcol] == k].loc[:, col]
+
+            scatter_kws_opts = dict(marker='.', markersize=5, alpha=0.6, c=color_dict[k], label=k)
+
+            probscale.probplot(data=df_k.values,
+                               ax=plt.gca(),
+                               scatter_kws=scatter_kws_opts,
+                               **common_opts)
+
+        lgnd = plt.legend(loc='best', prop={'size': 20}, title="Clusters")
+        for handle in lgnd.legendHandles:
+            handle._legmarker.set_markersize(40)
+        plt.setp(lgnd.get_title(), fontsize='20')
+
+        fig.suptitle("Probplot: " + col, fontsize=20)
+        plt.xlabel('Ordered values', fontsize=16)
+        plt.ylabel('Cumulative Probability', fontsize=16)
+        for axis in [plt.gca().xaxis]:
+            formatter = FuncFormatter(lambda y, _: '{:.16g}'.format(y))
+            axis.set_major_formatter(formatter)
+
+        plt.grid(True, which="both", ls="-", color='0.65', alpha=0.5, linewidth=0.5)
+
+        save_current_figure(output_path, "probplot", col)
+
+
+def save_current_figure(output_path, name, prefix=None):
+    output_path = output_path + name + "\\"
+    if not os.path.exists(output_path):
+        os.makedirs(output_path)
+
+    if prefix is not None:
+        plt.savefig(output_path + prefix + "_" + name + ".png", dpi=90, bbox_inches='tight')
+    else:
+        plt.savefig(output_path + name + ".png", dpi=90, bbox_inches='tight')
+    plt.close('all')
 
 
 if __name__ == "__main__":
