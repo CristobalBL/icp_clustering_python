@@ -25,8 +25,8 @@ def main():
     # Mg, Mn, Na, Ni, Rb, Re, S, Sb, Sc, Se, Sr, Te, Th, U, V, W.
 
     # Parameters
-    input_path = "C:\\Users\\crist\\Documents\\Work\\13_ModelClustering\\Datos\\data_comp.csv"  # input data
-    output_path = "C:\\Users\\crist\\Documents\\Work\\13_ModelClustering\\clustering_samples_icp\\results\\"
+    input_path = "<data_path>\\<file_name>.csv"  # input data
+    output_path = "<output_path>"
     output_filepath = output_path + "data_clustered.csv"
     loc_columns = ['dhid', 'midx', 'midy', 'midz']  # location vars
     col_group = "litmod"  # column of the category to filter
