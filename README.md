@@ -15,10 +15,6 @@ Pandas: https://pandas.pydata.org/
 
 Sklearn: https://scikit-learn.org/stable/
 
-Numpy: https://numpy.org/
-
-Matplotlib: https://matplotlib.org/
-
 ## Output example
 
 [Prob plot images]
