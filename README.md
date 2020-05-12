@@ -9,19 +9,15 @@ python clustering_icp.py
 
 ## Resources used
 
-Python3.7: https://www.python.org/
+- Python3.7: https://www.python.org/
 
-Pandas: https://pandas.pydata.org/
+- Pandas: https://pandas.pydata.org/
 
-Sklearn: https://scikit-learn.org/stable/
+- Sklearn: https://scikit-learn.org/stable/
 
 ## Output example
 
-<img src=https://github.com/CristobalBL/icp_clustering_python/blob/master/results/probplot/Be_ICP_ppm_probplot.png width=400 />
-
-<img src=https://github.com/CristobalBL/icp_clustering_python/blob/master/results/probplot/Ca_ICP_porc_probplot.png width=400 />
-
-<img src=https://github.com/CristobalBL/icp_clustering_python/blob/master/results/probplot/Mg_ICP_porc_probplot.png width=400 />
+<img src=https://github.com/CristobalBL/icp_clustering_python/blob/master/results/probplot/Be_ICP_ppm_probplot.png width=250 />  <img src=https://github.com/CristobalBL/icp_clustering_python/blob/master/results/probplot/Ca_ICP_porc_probplot.png width=250 />  <img src=https://github.com/CristobalBL/icp_clustering_python/blob/master/results/probplot/Mg_ICP_porc_probplot.png width=250 />
 
 ## Authors
 
